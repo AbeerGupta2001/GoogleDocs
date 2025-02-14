@@ -24,6 +24,10 @@ import { OrganizationSwitcher, UserButton } from "@clerk/nextjs";
 import { Doc } from "../../../../convex/_generated/dataModel";
 import { useMutation } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
+import { toast } from "sonner";
+import { useRouter } from "next/navigation";
+import RemoveDialog from "@/components/remove-dialog";
+import RenameDialog from "@/components/rename-dialog";
 
 interface NavbarProps{
   data: Doc<"documents">
@@ -31,8 +35,20 @@ interface NavbarProps{
 
 
 const Navbar = ({data}:NavbarProps) => {
-  const mutate = useMutation(api.documents.create)
-    const {editor} = useEditorStore()
+  const create = useMutation(api.documents.create)
+  const router = useRouter()
+
+
+  const {editor} = useEditorStore()
+
+  const onCreate = (title:string,initialContent:string) => {
+    create({title,initialContent}).catch(()=>toast.error("Error creating document")).then((documentId)=>{
+      router.push(`/documents/${documentId}`)
+      toast.success("Document Created")
+    })
+  }
+
+  
 
   const onDownload = (blob:Blob , filename:string) => {
     const url = URL.createObjectURL(blob)
@@ -105,19 +121,31 @@ const Navbar = ({data}:NavbarProps) => {
                       </MenubarItem>
                     </MenubarSubContent>
                   </MenubarSub>
-                  <MenubarItem>
+                  <MenubarItem onClick={() => onCreate(data.title, data.initialContent!)}>
                     <FilePlusIcon className="size-4 mr-2" />
                     New Document
                   </MenubarItem>
                   <MenubarSeparator />
-                  <MenubarItem>
-                    <FilePenIcon className="size-4 mr-2" />
-                    Rename
-                  </MenubarItem>
-                  <MenubarItem>
-                    <TrashIcon className="size-4 mr-2" />
-                    Remove
-                  </MenubarItem>
+                  <RenameDialog documentId={data._id} initialTitle={data.title}>
+                    <MenubarItem
+                      onSelect={(e) => e.preventDefault()}
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <FilePenIcon className="size-4 mr-2" />
+                      Rename
+                    </MenubarItem>
+                  </RenameDialog>
+
+                  <RemoveDialog documentId={data._id} title={data.title}>
+                    <MenubarItem
+                      onSelect={(e) => e.preventDefault()}
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <TrashIcon className="size-4 mr-2" />
+                      Remove
+                    </MenubarItem>
+                  </RemoveDialog>
+
                   <MenubarSeparator />
                   <MenubarItem onClick={() => window.print()}>
                     <PrinterIcon className="size-4 mr-2" />

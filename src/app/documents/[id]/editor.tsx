@@ -28,12 +28,19 @@ import { Threads } from "./threads";
 import { useStorage } from "@liveblocks/react";
 
 
+interface EditorProps{
+  initialContent?:string | undefined
+}
 
 
-const Editor = () => {
+
+const Editor = ({initialContent}:EditorProps) => {
   const leftMargin = useStorage((root)=> root.leftMargin)
   const rightMargin = useStorage((root)=>root.rightMargin)
-    const liveblocks = useLiveblocksExtension();
+    const liveblocks = useLiveblocksExtension({
+      initialContent,
+      offlineSupport_experimental:true
+    });
     const { setEditor } = useEditorStore()
     const editor = useEditor({
       onCreate({ editor }) {
@@ -67,13 +74,13 @@ const Editor = () => {
       extensions: [
         liveblocks,
         StarterKit.configure({
-          history:false
+          history: false,
         }),
         TaskList,
         FontSizeExtension,
         LineHeightExtension.configure({
-          types:["heading","paragraph"],
-          defaultLineHeight:"normal"
+          types: ["heading", "paragraph"],
+          defaultLineHeight: "normal",
         }),
         TaskItem.configure({
           nested: true,
@@ -167,6 +174,7 @@ const Editor = () => {
         }),
       ],
       content: ``,
+      immediatelyRender:false,
     });
   return (
     <div className="size-full overflow-x-auto bg-[#f9fbfd] px-4 print:p-0 print:bg-white print:overflow-visible">
